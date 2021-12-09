@@ -1,5 +1,5 @@
 import * as Y from 'yjs'
-import * as monaco from 'monaco-editor'
+import { Selection, SelectionDirection, Range } from "./monaco-editor-files";
 import * as error from 'lib0/error.js'
 import { createMutex } from 'lib0/mutex.js'
 import { Awareness } from 'y-protocols/awareness.js' // eslint-disable-line
@@ -8,7 +8,7 @@ class RelativeSelection {
   /**
    * @param {Y.RelativePosition} start
    * @param {Y.RelativePosition} end
-   * @param {monaco.SelectionDirection} direction
+   * @param {SelectionDirection} direction
    */
   constructor (start, end, direction) {
     this.start = start
@@ -39,7 +39,7 @@ const createRelativeSelection = (editor, monacoModel, type) => {
  * @param {Y.Text} type
  * @param {RelativeSelection} relSel
  * @param {Y.Doc} doc
- * @return {null|monaco.Selection}
+ * @return {null|Selection}
  */
 const createMonacoSelectionFromRelativeSelection = (editor, type, relSel, doc) => {
   const start = Y.createAbsolutePositionFromRelativePosition(relSel.start, doc)
@@ -48,7 +48,7 @@ const createMonacoSelectionFromRelativeSelection = (editor, type, relSel, doc) =
     const model = /** @type {monaco.editor.ITextModel} */ (editor.getModel())
     const startPos = model.getPositionAt(start.index)
     const endPos = model.getPositionAt(end.index)
-    return monaco.Selection.createWithDirection(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column, relSel.direction)
+    return Selection.createWithDirection(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column, relSel.direction)
   }
   return null
 }
@@ -109,7 +109,7 @@ export class MonacoBinding {
                   beforeContentClassName = 'yRemoteSelectionHead'
                 }
                 newDecorations.push({
-                  range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
+                  range: new Range(start.lineNumber, start.column, end.lineNumber, end.column),
                   options: {
                     className: 'yRemoteSelection',
                     afterContentClassName,
@@ -134,13 +134,13 @@ export class MonacoBinding {
             index += op.retain
           } else if (op.insert !== undefined) {
             const pos = monacoModel.getPositionAt(index)
-            const range = new monaco.Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column)
+            const range = new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column)
             monacoModel.applyEdits([{ range, text: op.insert }])
             index += op.insert.length
           } else if (op.delete !== undefined) {
             const pos = monacoModel.getPositionAt(index)
             const endPos = monacoModel.getPositionAt(index + op.delete)
-            const range = new monaco.Selection(pos.lineNumber, pos.column, endPos.lineNumber, endPos.column)
+            const range = new Selection(pos.lineNumber, pos.column, endPos.lineNumber, endPos.column)
             monacoModel.applyEdits([{ range, text: '' }])
           } else {
             throw error.unexpectedCase()
@@ -181,7 +181,7 @@ export class MonacoBinding {
             }
             let anchor = monacoModel.getOffsetAt(sel.getStartPosition())
             let head = monacoModel.getOffsetAt(sel.getEndPosition())
-            if (sel.getDirection() === monaco.SelectionDirection.RTL) {
+            if (sel.getDirection() === SelectionDirection.RTL) {
               const tmp = anchor
               anchor = head
               head = tmp
@@ -203,7 +203,7 @@ export class MonacoBinding {
     this.ytext.unobserve(this._ytextObserver)
     this.doc.off('beforeAllTransactions', this._beforeTransaction)
     if (this.awareness !== null) {
-      this.awareness.off('change', this._rerenderDecorations)
+      this.awareness?.off('change', this._rerenderDecorations)
     }
   }
 }
